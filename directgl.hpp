@@ -1,5 +1,5 @@
-#ifndef DIRECTGL_LIBRARY
-	#define DIRECTGL_LIBRARY
+#ifndef GL
+	#define GL
 
 	#ifndef UNICODE
 		#define UNICODE
