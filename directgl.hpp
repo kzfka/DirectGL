@@ -33,7 +33,7 @@
 		namespace GL
 		{
 			typedef unsigned char Key;
-			typedef unsigned short SizeT;
+			typedef unsigned short Size;
 
 			class Vertex
 			{
@@ -168,10 +168,10 @@
 					wstring getTitle()
 					{return title;}
 
-					SizeT getWidth()
+					Size getWidth()
 					{return width;}
 
-					SizeT getHeight()
+					Size getHeight()
 					{return height;}
 
 					Vertex getMousePos()
@@ -180,10 +180,10 @@
 					void setTitle(wstring title)
 					{this->title = title; SetWindowTextW(handle, title.c_str());}
 
-					void setWidth(SizeT width)
+					void setWidth(Size width)
 					{this->width = width; SetWindowPos(handle, handle, 0, 0, width, height, SWP_NOMOVE); target->Resize(D2D1::SizeU(width, height));}
 
-					void setHeight(SizeT height)
+					void setHeight(Size height)
 					{this->height = height; SetWindowPos(handle, handle, 0, 0, width, height, SWP_NOMOVE); target->Resize(D2D1::SizeU(width, height));}
 
 					void setMousePos(Vertex vertex)
@@ -403,7 +403,7 @@
 			class Bitmap : public Drawable
 			{
 				ID2D1Bitmap *bitmap;
-				SizeT width, height;
+				Size width, height;
 
 				public:
 					Vertex vertex;
@@ -427,10 +427,10 @@
 						factory->Release();
 					}
 
-					SizeT getWidth()
+					Size getWidth()
 					{return width;}
 
-					SizeT getHeight()
+					Size getHeight()
 					{return height;}
 
 					void draw()
