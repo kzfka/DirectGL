@@ -1,6 +1,11 @@
 #ifndef DIRECTGL_INCLUDED
 	#define DIRECTGL_INCLUDED
 
+	#pragma comment(lib, "libd2d1.a")
+	#pragma comment(lib, "libdwrite.a")
+	#pragma comment(lib, "libwindowscodecs.a")
+	#pragma comment(lib, "libole32.a")
+
 	#ifndef UNICODE
 		#define UNICODE
 		#define UNICODE_WAS_UNDEFINED
@@ -25,7 +30,7 @@
 
 	namespace std
 	{
-		namespace DirectGL
+		namespace GL
 		{
 			typedef unsigned char Key;
 			typedef unsigned short SizeT;
@@ -110,7 +115,7 @@
 				friend LRESULT CALLBACK ::WindowProc(HWND, UINT, WPARAM, LPARAM);
 				friend INT WINAPI ::WinMain(HINSTANCE, HINSTANCE, PSTR, INT);
 
-				wstring title = L"DirectGL";
+				wstring title = L"GL";
 				short int width = 640;
 				short int height = 480;
 
@@ -441,31 +446,31 @@
 
 		window_class.lpfnWndProc = WindowProc;
 		window_class.hInstance = instance_handle;
-		window_class.lpszClassName = L"DirectGL_WINDOW";
+		window_class.lpszClassName = L"GL_WINDOW";
 
 		RegisterClassW(&window_class);
 
-		std::DirectGL::window->handle = CreateWindowExW
+		std::GL::window->handle = CreateWindowExW
 		(
 			0,
 			window_class.lpszClassName,
-			std::DirectGL::window->title.c_str(),
+			std::GL::window->title.c_str(),
 			WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 			CW_USEDEFAULT,
 			CW_USEDEFAULT,
-			std::DirectGL::window->width + 5,
-			std::DirectGL::window->height + 29,
+			std::GL::window->width + 5,
+			std::GL::window->height + 29,
 			NULL,
 			NULL,
 			instance_handle,
 			NULL
 		);
 		
-		std::DirectGL::window->create();
+		std::GL::window->create();
 
-		ShowWindow(std::DirectGL::window->handle, show_cmd);
+		ShowWindow(std::GL::window->handle, show_cmd);
 		ShowWindow(GetConsoleWindow(), SW_HIDE);
-		UpdateWindow(std::DirectGL::window->handle);
+		UpdateWindow(std::GL::window->handle);
 
 		while(GetMessageW(&message, NULL, 0, 0) > 0)
 		{TranslateMessage(&message); DispatchMessageW(&message);}
@@ -477,29 +482,29 @@
 	{
 		switch(message)
 		{
-			case WM_DESTROY: std::DirectGL::window->onDestroy(); PostQuitMessage(0); return 0;
-			case WM_PAINT:  std::DirectGL::window->update(); return 0;
+			case WM_DESTROY: std::GL::window->onDestroy(); PostQuitMessage(0); return 0;
+			case WM_PAINT:  std::GL::window->update(); return 0;
 			
-			case WM_KEYDOWN: std::DirectGL::window->key[message_parameter0] = true; std::DirectGL::window->onKeystroke(message_parameter0); return 0;
-			case WM_LBUTTONDOWN: std::DirectGL::window->key[VK_LBUTTON] = true; std::DirectGL::window->onKeystroke(VK_LBUTTON); return 0;
-			case WM_MBUTTONDOWN: std::DirectGL::window->key[VK_MBUTTON] = true; std::DirectGL::window->onKeystroke(VK_MBUTTON); return 0;
-			case WM_RBUTTONDOWN: std::DirectGL::window->key[VK_RBUTTON] = true; std::DirectGL::window->onKeystroke(VK_RBUTTON); return 0;
+			case WM_KEYDOWN: std::GL::window->key[message_parameter0] = true; std::GL::window->onKeystroke(message_parameter0); return 0;
+			case WM_LBUTTONDOWN: std::GL::window->key[VK_LBUTTON] = true; std::GL::window->onKeystroke(VK_LBUTTON); return 0;
+			case WM_MBUTTONDOWN: std::GL::window->key[VK_MBUTTON] = true; std::GL::window->onKeystroke(VK_MBUTTON); return 0;
+			case WM_RBUTTONDOWN: std::GL::window->key[VK_RBUTTON] = true; std::GL::window->onKeystroke(VK_RBUTTON); return 0;
 			case WM_XBUTTONDOWN:
 				switch(message_parameter0)
 				{
-					case XBUTTON1: std::DirectGL::window->key[VK_XBUTTON1] = true; std::DirectGL::window->onKeystroke(VK_XBUTTON1); return 0;
-					case XBUTTON2: std::DirectGL::window->key[VK_XBUTTON2] = true; std::DirectGL::window->onKeystroke(VK_XBUTTON2); return 0;
+					case XBUTTON1: std::GL::window->key[VK_XBUTTON1] = true; std::GL::window->onKeystroke(VK_XBUTTON1); return 0;
+					case XBUTTON2: std::GL::window->key[VK_XBUTTON2] = true; std::GL::window->onKeystroke(VK_XBUTTON2); return 0;
 				}
 
-			case WM_KEYUP: std::DirectGL::window->key[message_parameter0] = false; return 0;
-			case WM_LBUTTONUP: std::DirectGL::window->key[VK_LBUTTON] = false; return 0;
-			case WM_MBUTTONUP: std::DirectGL::window->key[VK_MBUTTON] = false; return 0;
-			case WM_RBUTTONUP: std::DirectGL::window->key[VK_RBUTTON] = false; return 0;
+			case WM_KEYUP: std::GL::window->key[message_parameter0] = false; return 0;
+			case WM_LBUTTONUP: std::GL::window->key[VK_LBUTTON] = false; return 0;
+			case WM_MBUTTONUP: std::GL::window->key[VK_MBUTTON] = false; return 0;
+			case WM_RBUTTONUP: std::GL::window->key[VK_RBUTTON] = false; return 0;
 			case WM_XBUTTONUP:
 				switch(message_parameter0)
 				{
-					case XBUTTON1: std::DirectGL::window->key[VK_XBUTTON1] = false; return 0;
-					case XBUTTON2: std::DirectGL::window->key[VK_XBUTTON2] = false; return 0;
+					case XBUTTON1: std::GL::window->key[VK_XBUTTON1] = false; return 0;
+					case XBUTTON2: std::GL::window->key[VK_XBUTTON2] = false; return 0;
 				}
 		}
 
