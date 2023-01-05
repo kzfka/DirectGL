@@ -7,6 +7,3 @@ An application that uses DirectGL needs a few Windows specific libraries in orde
   - libdwrite.a
   - libwindowscodecs.a
   - libole32.a
-
-If your IDE features a linker, add the above libraries.
-<sub>Alternatively, </sub>
