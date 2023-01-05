@@ -10,8 +10,4 @@ If you're using an IDE that features a linker, add the following libraries:
   - libwindowscodecs.a
   - libole32.a
 
-Alternatively, if your code editor doesn't have a linker, add the following compile options to your command line:
-  - -ld2d1
-  - -ldwrite
-  - -lwindowscodecs
-  - -lole32
+Alternatively, if your code editor doesn't have a linker, add the following compile options to your command line: `-ld2d1 -ldwrite -lwindowscodecs -lole32`
