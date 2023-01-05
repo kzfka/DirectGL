@@ -7,3 +7,5 @@ An application that uses DirectGL needs a few Windows specific libraries in orde
   - libdwrite.a
   - libwindowscodecs.a
   - libole32.a
+
+Alternatively, in case if you're not able to use a linker, edit your compile line so it includes the following: `-ld2d1 -ldwrite -lwindowscodecs -lole32`.
