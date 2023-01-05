@@ -9,5 +9,4 @@ If you're using an IDE that features a linker, add the following libraries:
   - libdwrite.a
   - libwindowscodecs.a
   - libole32.a
-
 Alternatively, if your code editor doesn't have a linker, edit your command line so it contains the following: `-ld2d1 -ldwrite -lwindowscodecs -lole32`
