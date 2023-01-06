@@ -115,13 +115,16 @@
 				friend LRESULT CALLBACK ::WindowProc(HWND, UINT, WPARAM, LPARAM);
 				friend INT WINAPI ::WinMain(HINSTANCE, HINSTANCE, PSTR, INT);
 
-				wstring title = L"GL";
-				short int width = 640;
-				short int height = 480;
+				wstring title = L"DirectGL";
+				Size width = 640;
+				Size height = 480;
 
 				HWND handle;
 				ID2D1Factory *factory;
 				ID2D1HwndRenderTarget *target;
+				vector<ID2D1Layer*> layers;
+
+				bool key[256];
 
 				void create()
 				{
@@ -141,7 +144,11 @@
 					target->EndDraw();
 				}
 
-				bool key[256];
+				void setHeld(Key key, bool held)
+				{
+					if(key >= 0 && key < 256)
+					{this->key[key] = held;}
+				}
 
 				public:
 					enum
@@ -162,6 +169,10 @@
 					{
 						factory->Release();
 						target->Release();
+
+						for(size_t i = 0; i < layers.size(); i++)
+						{layers[i]->Release();}
+
 						CoUninitialize();
 					}
 
@@ -192,11 +203,29 @@
 					bool isHeld(Key key)
 					{return this->key[key];}
 
-					void clear(Color color = L"")
-					{target->Clear(color);}
-
 					void destroy()
 					{DestroyWindow(handle); exit(0);}
+
+					void clear(Color color = L"")
+					{ID2D1SolidColorBrush *brush; target->CreateSolidColorBrush(color, &brush); target->DrawRectangle({0, 0, (float)width, (float)height}, brush); brush->Release();}
+
+					void addLayer()
+					{ID2D1Layer *layer; target->CreateLayer(NULL, &layer); layers.push_back(layer);}
+
+					void addLayers(size_t amount)
+					{
+						for(size_t i = 0; i < amount; i++)
+						{addLayer();}
+					}
+
+					void selectLayer(size_t layerIndex)
+					{target->PushLayer({{0, 0, (float)getWidth(), (float)getHeight()}, NULL, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE, D2D1::IdentityMatrix(), 1, 0, D2D1_LAYER_OPTIONS_NONE}, layers[layerIndex]);}
+
+					void unselectLayer()
+					{target->PopLayer();}
+
+					void removeLayer(size_t layerIndex)
+					{layers[layerIndex]->Release(); layers.erase(layers.begin() + layerIndex);}
 
 					virtual void onCreate()
 					{}
@@ -306,16 +335,18 @@
 				public:
 					Vertex start, end;
 					Color color;
+					float thickness;
 
-					Line(Vertex start = {}, Vertex end = {}, Color color = L"")
+					Line(Vertex start = {}, Vertex end = {}, Color color = L"", float thickness = 1)
 					{
 						this->start = start;
 						this->end = end;
 						this->color = color;
+						this->thickness = thickness;
 					}
 
 					void draw()
-					{getTarget()->DrawLine(start, end, Direct2DBrush(color));}
+					{getTarget()->DrawLine(start, end, Direct2DBrush(color), thickness);}
 			};
 
 			class Rectangle : public Shape
@@ -446,7 +477,7 @@
 
 		window_class.lpfnWndProc = WindowProc;
 		window_class.hInstance = instance_handle;
-		window_class.lpszClassName = L"GL_WINDOW";
+		window_class.lpszClassName = L"DIRECTGL_WINDOW";
 
 		RegisterClassW(&window_class);
 
@@ -485,7 +516,7 @@
 			case WM_DESTROY: std::GL::window->onDestroy(); PostQuitMessage(0); return 0;
 			case WM_PAINT:  std::GL::window->update(); return 0;
 			
-			case WM_KEYDOWN: std::GL::window->key[message_parameter0] = true; std::GL::window->onKeystroke(message_parameter0); return 0;
+			case WM_KEYDOWN: std::GL::window->setHeld(message_parameter0, true); std::GL::window->onKeystroke(message_parameter0); return 0;
 			case WM_LBUTTONDOWN: std::GL::window->key[VK_LBUTTON] = true; std::GL::window->onKeystroke(VK_LBUTTON); return 0;
 			case WM_MBUTTONDOWN: std::GL::window->key[VK_MBUTTON] = true; std::GL::window->onKeystroke(VK_MBUTTON); return 0;
 			case WM_RBUTTONDOWN: std::GL::window->key[VK_RBUTTON] = true; std::GL::window->onKeystroke(VK_RBUTTON); return 0;
@@ -496,7 +527,7 @@
 					case XBUTTON2: std::GL::window->key[VK_XBUTTON2] = true; std::GL::window->onKeystroke(VK_XBUTTON2); return 0;
 				}
 
-			case WM_KEYUP: std::GL::window->key[message_parameter0] = false; return 0;
+			case WM_KEYUP: std::GL::window->setHeld(message_parameter0, false); return 0;
 			case WM_LBUTTONUP: std::GL::window->key[VK_LBUTTON] = false; return 0;
 			case WM_MBUTTONUP: std::GL::window->key[VK_MBUTTON] = false; return 0;
 			case WM_RBUTTONUP: std::GL::window->key[VK_RBUTTON] = false; return 0;
