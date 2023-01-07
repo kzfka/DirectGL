@@ -128,7 +128,7 @@
 				{
 					RECT rect; GetClientRect(handle, &rect);
 
-					CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
+					CoInitializeEx(NULL, COINITBASE_MULTITHREADED);
 					D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &factory);
 					factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(handle, D2D1::SizeU(rect.right, rect.bottom)), &target);
 
@@ -411,13 +411,16 @@
 			{
 				ID2D1Bitmap *bitmap;
 				size_t width, height;
-				vector<Color> colors;
+				vector<Color> colors = vector<Color>();
 
 				public:
 					Vertex vertex;
 
 					Bitmap(Vertex vertex = {})
 					{this->vertex = vertex;}
+
+					~Bitmap()
+					{bitmap->Release();}
 
 					void loadFromFile(wstring filePath)
 					{
