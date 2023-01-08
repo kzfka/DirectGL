@@ -1,11 +1,6 @@
 #ifndef DIRECTGL_INCLUDED
 	#define DIRECTGL_INCLUDED
 
-	#pragma comment(lib, "libd2d1.a")
-	#pragma comment(lib, "libdwrite.a")
-	#pragma comment(lib, "libwindowscodecs.a")
-	#pragma comment(lib, "libole32.a")
-
 	#ifndef UNICODE
 		#define UNICODE
 		#define UNICODE_WAS_UNDEFINED
