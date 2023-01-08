@@ -206,7 +206,7 @@
 					virtual void onDestroy()
 					{}
 
-					virtual void onKeystroke(unsigned char)
+					virtual void onKeystroke(Key)
 					{}
 			};
 
@@ -231,10 +231,10 @@
 				IDWriteTextFormat *format;
 
 				public:
-					Direct2DFont(wstring fontName, float fontsize_t)
+					Direct2DFont(float fontSize, wstring fontFamily)
 					{
 						DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(factory), (IUnknown**)&factory);
-						factory->CreateTextFormat(fontName.c_str(), nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, fontsize_t, L"", &format);
+						factory->CreateTextFormat(fontFamily.c_str(), nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, fontSize, L"", &format);
 					}
 
 					~Direct2DFont()
@@ -280,16 +280,16 @@
 			{
 				public:
 					Vertex vertex;
-					wstring text, fontName;
-					float fontsize_t;
+					wstring text, fontFamily;
+					float fontSize;
 					Color color;
 
-					Text(Vertex vertex = {}, wstring text = L"", Color color = L"", wstring fontName = L"Verdana", float fontsize_t = 11)
+					Text(Vertex vertex = {}, wstring text = L"", Color color = L"", float fontSize = 11, wstring fontFamily = L"Arial")
 					{
 						this->vertex = vertex;
 						this->text = text;
-						this->fontName = fontName;
-						this->fontsize_t = fontsize_t;
+						this->fontSize = fontSize;
+						this->fontFamily = fontFamily;
 						this->color = color;
 					}
 
@@ -297,7 +297,7 @@
 					{}
 
 					void draw()
-					{getTarget()->DrawTextW(text.c_str(), text.size(), Direct2DFont(fontName, fontsize_t), {vertex.x, vertex.y, getWindowWidth(), getWindowHeight()}, Direct2DBrush(color));}
+					{getTarget()->DrawTextW(text.c_str(), text.size(), Direct2DFont(fontSize, fontFamily), {vertex.x, vertex.y, getWindowWidth(), getWindowHeight()}, Direct2DBrush(color));}
 			};
 
 			class Line : public Drawable
