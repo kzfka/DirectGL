@@ -84,7 +84,7 @@
 						{0, 0, 0, 1};
 
 						for(size_t i = 0; i < hex.size() && i < 8; i += 2)
-						{values[i / 2] = ((float)stoi(hex.substr(i, 2), NULL, 16)) / 255;}
+						{values[i / 2] = ((float)stoi(hex.substr(i, 2), nullptr, 16)) / 255;}
 
 						r = values[0];
 						g = values[1];
@@ -128,7 +128,7 @@
 				{
 					RECT rect; GetClientRect(handle, &rect);
 
-					CoInitializeEx(NULL, COINITBASE_MULTITHREADED);
+					CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
 					D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &factory);
 					factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(handle, D2D1::SizeU(rect.right, rect.bottom)), &target);
 
@@ -167,7 +167,6 @@
 					{
 						factory->Release();
 						target->Release();
-						CoUninitialize();
 					}
 
 					wstring getTitle()
@@ -240,7 +239,7 @@
 					Direct2DFont(wstring fontName, float fontsize_t)
 					{
 						DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(factory), (IUnknown**)&factory);
-						factory->CreateTextFormat(fontName.c_str(), NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, fontsize_t, L"", &format);
+						factory->CreateTextFormat(fontName.c_str(), nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, fontsize_t, L"", &format);
 					}
 
 					~Direct2DFont()
@@ -409,8 +408,13 @@
 
 			class Bitmap : public Drawable
 			{
-				ID2D1Bitmap *bitmap;
-				size_t width, height;
+				IWICImagingFactory *factory = nullptr;
+				IWICBitmapDecoder *decoder = nullptr;
+				IWICBitmapFrameDecode *frame = nullptr;
+				IWICFormatConverter *converter = nullptr;
+				ID2D1Bitmap *bitmap = nullptr;
+
+				size_t width = 0, height = 0;
 				vector<Color> colors = vector<Color>();
 
 				public:
@@ -419,27 +423,36 @@
 					Bitmap(Vertex vertex = {})
 					{this->vertex = vertex;}
 
+					Bitmap(Vertex vertex, wstring filePath)
+					{this->vertex = vertex; this->loadFromFile(filePath);}
+
 					~Bitmap()
-					{bitmap->Release();}
+					{
+						if(factory && decoder && frame && converter && bitmap)
+						{
+							factory->Release(); factory = nullptr;
+							decoder->Release(); decoder = nullptr;
+							frame->Release(); frame = nullptr;
+							converter->Release(); converter = nullptr;
+							bitmap->Release(); bitmap = nullptr;
+						}
+					}
 
 					void loadFromFile(wstring filePath)
 					{
-						IWICImagingFactory *factory; CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (void**)&factory);
-						IWICBitmapDecoder *decoder; factory->CreateDecoderFromFilename(filePath.c_str(), NULL, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder);
-						IWICBitmapFrameDecode *frame; decoder->GetFrame(0, &frame); frame->GetSize((UINT*)&width, (UINT*)&height);
-						IWICFormatConverter *converter; factory->CreateFormatConverter(&converter);
-						BYTE *bytes = new BYTE[width * height * 4]; frame->CopyPixels(NULL, width * 4, width * height * 4, bytes);
+						CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (void**)&factory);
+						factory->CreateDecoderFromFilename(filePath.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder);
+						decoder->GetFrame(0, &frame);
+						factory->CreateFormatConverter(&converter); frame->GetSize((UINT*)&width, (UINT*)&height);
+						converter->Initialize(frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
+						getTarget()->CreateBitmapFromWicBitmap(converter, nullptr, &bitmap);
 
-						converter->Initialize(frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0, WICBitmapPaletteTypeMedianCut);
-						getTarget()->CreateBitmapFromWicBitmap(converter, NULL, &bitmap);
+						BYTE *bytes = new BYTE[width * height * 4];
+						frame->CopyPixels(nullptr, width * 4, width * height * 4, bytes);
 
-						for(size_t i = 0; i < width * height * 4; i += 4)
+						for(size_t i = 0; i < width * height * 4; i++)
 						{colors.push_back(Color::fromRGBA(*(bytes + i + 2), *(bytes + i + 1), *(bytes + i), *(bytes + i + 3)));}
 
-						converter->Release();
-						frame->Release();
-						decoder->Release();
-						factory->Release();
 						delete []bytes;
 					}
 
@@ -449,8 +462,8 @@
 					size_t getHeight()
 					{return height;}
 
-					Color getColor(Vertex vertex)
-					{return colors[vertex.y * width + vertex.x];}
+					Color getColor(size_t x, size_t y)
+					{return colors[y * width + x];}
 
 					void draw()
 					{getTarget()->DrawBitmap(bitmap, {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
@@ -479,10 +492,10 @@
 			CW_USEDEFAULT,
 			std::GL::window->width + 5,
 			std::GL::window->height + 29,
-			NULL,
-			NULL,
+			nullptr,
+			nullptr,
 			instance_handle,
-			NULL
+			nullptr
 		);
 		
 		std::GL::window->create();
@@ -491,7 +504,7 @@
 		ShowWindow(GetConsoleWindow(), SW_HIDE);
 		UpdateWindow(std::GL::window->handle);
 
-		while(GetMessageW(&message, NULL, 0, 0) > 0)
+		while(GetMessageW(&message, nullptr, 0, 0) > 0)
 		{TranslateMessage(&message); DispatchMessageW(&message);}
 
 		return 0;
