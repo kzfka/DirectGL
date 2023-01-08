@@ -100,11 +100,18 @@
 					{return !(*this == rhs);}
 			};
 
+			class CoreCOMSession
+			{
+				public:
+					CoreCOMSession()
+					{CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);}
+			} coreCOMSession;
+
 			class Window *window;
 			class Window
 			{
 				friend class Drawable;
-				friend class Direct2DBrush;
+				friend class CoreBrush;
 
 				friend LRESULT CALLBACK ::WindowProc(HWND, UINT, WPARAM, LPARAM);
 				friend INT WINAPI ::WinMain(HINSTANCE, HINSTANCE, PSTR, INT);
@@ -123,7 +130,6 @@
 				{
 					RECT rect; GetClientRect(handle, &rect);
 
-					CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
 					D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &factory);
 					factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(handle, D2D1::SizeU(rect.right, rect.bottom)), &target);
 
@@ -210,34 +216,34 @@
 					{}
 			};
 
-			class Direct2DBrush
+			class CoreBrush
 			{
 				ID2D1SolidColorBrush *brush;
 
 				public:
-					Direct2DBrush(Color color = L"")
+					CoreBrush(Color color = L"")
 					{window->target->CreateSolidColorBrush(color, &brush);}
 
-					~Direct2DBrush()
+					~CoreBrush()
 					{brush->Release();}
 
 					operator ID2D1SolidColorBrush*()
 					{return brush;}
 			};
 
-			class Direct2DFont
+			class CoreFont
 			{
 				IDWriteFactory *factory;
 				IDWriteTextFormat *format;
 
 				public:
-					Direct2DFont(float fontSize, wstring fontFamily)
+					CoreFont(float fontSize, wstring fontFamily)
 					{
 						DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(factory), (IUnknown**)&factory);
 						factory->CreateTextFormat(fontFamily.c_str(), nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, fontSize, L"", &format);
 					}
 
-					~Direct2DFont()
+					~CoreFont()
 					{
 						format->Release();
 						factory->Release();
@@ -297,7 +303,7 @@
 					{}
 
 					void draw()
-					{getTarget()->DrawTextW(text.c_str(), text.size(), Direct2DFont(fontSize, fontFamily), {vertex.x, vertex.y, getWindowWidth(), getWindowHeight()}, Direct2DBrush(color));}
+					{getTarget()->DrawTextW(text.c_str(), text.size(), CoreFont(fontSize, fontFamily), {vertex.x, vertex.y, getWindowWidth(), getWindowHeight()}, CoreBrush(color));}
 			};
 
 			class Line : public Drawable
@@ -316,7 +322,7 @@
 					}
 
 					void draw()
-					{getTarget()->DrawLine(start, end, Direct2DBrush(color), thickness);}
+					{getTarget()->DrawLine(start, end, CoreBrush(color), thickness);}
 			};
 
 			class Rectangle : public Shape
@@ -332,10 +338,10 @@
 					}
 
 					void draw()
-					{getTarget()->DrawRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, Direct2DBrush(color));}
+					{getTarget()->DrawRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, CoreBrush(color));}
 
 					void fill()
-					{getTarget()->FillRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, Direct2DBrush(color));}
+					{getTarget()->FillRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, CoreBrush(color));}
 			};
 
 			class Ellipse : public Shape
@@ -351,10 +357,10 @@
 					}
 
 					void draw()
-					{getTarget()->DrawEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, Direct2DBrush(color));}
+					{getTarget()->DrawEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, CoreBrush(color));}
 
 					void fill()
-					{getTarget()->FillEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, Direct2DBrush(color));}
+					{getTarget()->FillEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, CoreBrush(color));}
 			};
 
 			class Polygon : public Shape
@@ -378,7 +384,7 @@
 						sink->EndFigure(D2D1_FIGURE_END_CLOSED);
 
 						sink->Close();
-						getTarget()->DrawGeometry(geometry, Direct2DBrush(color));
+						getTarget()->DrawGeometry(geometry, CoreBrush(color));
 
 						sink->Release();
 						geometry->Release();
@@ -394,7 +400,7 @@
 						sink->EndFigure(D2D1_FIGURE_END_CLOSED);
 
 						sink->Close();
-						getTarget()->FillGeometry(geometry, Direct2DBrush(color));
+						getTarget()->FillGeometry(geometry, CoreBrush(color));
 
 						sink->Release();
 						geometry->Release();
@@ -407,7 +413,6 @@
 				IWICBitmapDecoder *decoder = nullptr;
 				IWICBitmapFrameDecode *frame = nullptr;
 				IWICFormatConverter *converter = nullptr;
-				ID2D1Bitmap *bitmap = nullptr;
 
 				size_t width = 0, height = 0;
 				vector<Color> colors = vector<Color>();
@@ -423,16 +428,15 @@
 
 					~Bitmap()
 					{
-						if(factory && decoder && frame && converter && bitmap)
+						if(factory && decoder && frame && converter)
 						{
 							factory->Release(); factory = nullptr;
 							decoder->Release(); decoder = nullptr;
 							frame->Release(); frame = nullptr;
 							converter->Release(); converter = nullptr;
-							bitmap->Release(); bitmap = nullptr;
 						}
 					}
-
+					
 					void loadFromFile(wstring filePath)
 					{
 						CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (void**)&factory);
@@ -440,7 +444,6 @@
 						decoder->GetFrame(0, &frame);
 						factory->CreateFormatConverter(&converter); frame->GetSize((UINT*)&width, (UINT*)&height);
 						converter->Initialize(frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
-						getTarget()->CreateBitmapFromWicBitmap(converter, nullptr, &bitmap);
 
 						BYTE *bytes = new BYTE[width * height * 4];
 						frame->CopyPixels(nullptr, width * 4, width * height * 4, bytes);
@@ -461,7 +464,13 @@
 					{return colors[y * width + x];}
 
 					void draw()
-					{getTarget()->DrawBitmap(bitmap, {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
+					{
+						ID2D1Bitmap *bitmap; getTarget()->CreateBitmapFromWicBitmap(converter, nullptr, &bitmap);
+
+						getTarget()->DrawBitmap(bitmap, {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});
+						
+						bitmap->Release();
+					}
 			};
 		}
 	}
