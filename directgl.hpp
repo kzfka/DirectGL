@@ -10,7 +10,6 @@
 	#include <math.h>
 	#include <vector>
 	#include <stdlib.h>
-	#include <iostream>
 
 	#include <wincodec.h>
 	#include <windows.h>
@@ -29,6 +28,7 @@
 		namespace GL
 		{
 			typedef unsigned char Key;
+			typedef unsigned int Direction;
 
 			class Vertex
 			{
@@ -174,6 +174,12 @@
 						numpad8, numpad9, a = 0x41, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z
 					};
 
+					enum
+					{
+						forwards = 7864320,
+						backwards = 4287102976
+					};
+
 					Window()
 					{window = this;}
 					
@@ -226,6 +232,9 @@
 					{}
 
 					virtual void onKeystroke(Key)
+					{}
+
+					virtual void onScroll(Direction)
 					{}
 			};
 
@@ -592,6 +601,8 @@
 					case XBUTTON1: std::GL::window->key[VK_XBUTTON1] = false; return 0;
 					case XBUTTON2: std::GL::window->key[VK_XBUTTON2] = false; return 0;
 				}
+
+			case WM_MOUSEWHEEL: std::GL::window->onScroll(message_parameter0); return 0;
 		}
 
 		return DefWindowProcW(window_handle, message, message_parameter0, message_parameter1);
