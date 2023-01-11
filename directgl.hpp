@@ -439,6 +439,9 @@
 				vector<Color> colors = vector<Color>();
 
 				public:
+					static Bitmap &fromFile(Vertex vertex, wstring filePath)
+					{Bitmap bitmap(vertex); bitmap.loadFromFile(filePath); return bitmap;}
+
 					Vertex vertex;
 
 					Bitmap(Vertex vertex = {})
