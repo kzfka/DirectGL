@@ -10,6 +10,7 @@
 	#include <math.h>
 	#include <vector>
 	#include <stdlib.h>
+	#include <iostream>
 
 	#include <wincodec.h>
 	#include <windows.h>
@@ -100,21 +101,27 @@
 					{return !(*this == rhs);}
 			};
 
-			class CoreCOMSession
+			class Request
 			{
-				public:
-					CoreCOMSession()
-					{CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);}
-			} coreCOMSession;
+				friend class Window;
+
+				protected:
+					void request();
+					virtual void onRequest()
+					{}
+			};
 
 			class Window *window;
 			class Window
 			{
+				friend class Request;
 				friend class Drawable;
 				friend class CoreBrush;
 
 				friend LRESULT CALLBACK ::WindowProc(HWND, UINT, WPARAM, LPARAM);
 				friend INT WINAPI ::WinMain(HINSTANCE, HINSTANCE, PSTR, INT);
+
+				static inline vector<Request*> requests;
 
 				wstring title = L"DirectGL";
 				size_t width = 640;
@@ -129,9 +136,13 @@
 				void create()
 				{
 					RECT rect; GetClientRect(handle, &rect);
-
+					
+					CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
 					D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &factory);
 					factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(handle, D2D1::SizeU(rect.right, rect.bottom)), &target);
+
+					for(size_t i = 0; i < requests.size(); i++)
+					{requests[i]->onRequest(); requests.erase(requests.begin() + i);}
 
 					onCreate();
 				}
@@ -259,7 +270,6 @@
 					static ID2D1HwndRenderTarget *getTarget()
 					{return window->target;}
 
-
 					static ID2D1Factory *getFactory()
 					{return window->factory;}
 
@@ -270,7 +280,7 @@
 					{return window->getHeight();}
 
 				public:
-					virtual void draw(ID2D1RenderTarget *target = getTarget())
+					virtual void draw(ID2D1RenderTarget *target)
 					{}
 			};
 
@@ -279,7 +289,7 @@
 				public:
 					Color color;
 
-					virtual void fill(ID2D1RenderTarget *target = getTarget())
+					virtual void fill(ID2D1RenderTarget *target)
 					{}
 			};
 
@@ -408,11 +418,13 @@
 					}
 			};
 
-			class Bitmap : public Drawable
+			class Bitmap : public Drawable, public Request
 			{
 				ID2D1Bitmap *bitmap = nullptr;
+				
+				wstring filePath;
 
-				float width = 0, height = 0;
+				int width = 0, height = 0;
 				vector<Color> colors = vector<Color>();
 
 				public:
@@ -421,18 +433,29 @@
 					Bitmap(Vertex vertex = {})
 					{this->vertex = vertex;}
 
+					Bitmap(Vertex vertex, wstring filePath)
+					{
+						this->vertex = vertex;
+						this->filePath = filePath;
+
+						request();
+					}
+
 					~Bitmap()
 					{
 						if(bitmap)
 						{bitmap->Release(); bitmap = nullptr;}
 					}
 					
+					void onRequest()
+					{loadFromFile(filePath);}
+
 					void loadFromFile(wstring filePath)
 					{
 						IWICImagingFactory *factory; CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (void**)&factory);
 						IWICBitmapDecoder *decoder; factory->CreateDecoderFromFilename(filePath.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder);
-						IWICBitmapFrameDecode *frame; decoder->GetFrame(0, &frame);
-					 	IWICFormatConverter *converter; factory->CreateFormatConverter(&converter); frame->GetSize((UINT*)&width, (UINT*)&height);
+						IWICBitmapFrameDecode *frame; decoder->GetFrame(0, &frame); frame->GetSize((UINT*)&width, (UINT*)&height);
+					 	IWICFormatConverter *converter; factory->CreateFormatConverter(&converter);
 						
 						converter->Initialize(frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
 						getTarget()->CreateBitmapFromWicBitmap(converter, &bitmap);
@@ -440,7 +463,7 @@
 						BYTE *bytes = new BYTE[(int)width * (int)height * 4];
 						frame->CopyPixels(nullptr, width * 4, width * height * 4, bytes);
 
-						for(size_t i = 0; i < width * height * 4; i++)
+						for(int i = 0; i < width * height * 4; i++)
 						{colors.push_back(Color::fromRGBA(*(bytes + i + 2), *(bytes + i + 1), *(bytes + i), *(bytes + i + 3)));}
 
 						delete []bytes;
@@ -463,13 +486,13 @@
 					{target->DrawBitmap(bitmap, {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
 			};
 
-			class Layer : public Drawable
+			class Layer : public Drawable, public Request
 			{
 				ID2D1BitmapRenderTarget *target = nullptr;
 
 				public:
 					Layer()
-					{}
+					{request();}
 
 					~Layer()
 					{
@@ -480,13 +503,13 @@
 					operator ID2D1RenderTarget*()
 					{return target;}
 
-					void create()
+					void onRequest()
 					{getTarget()->CreateCompatibleRenderTarget(&target); target->BeginDraw();}
 
 					void clear(Color color = L"")
 					{target->Clear(color);}
 
-					void render()
+					void draw()
 					{
 						ID2D1Bitmap *bitmap; target->GetBitmap(&bitmap);
 
@@ -497,6 +520,9 @@
 						bitmap->Release();
 					}
 			};
+
+			void Request::request()
+			{Window::requests.push_back(this);}
 		}
 	}
 
