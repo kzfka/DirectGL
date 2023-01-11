@@ -256,20 +256,21 @@
 			class Drawable
 			{
 				protected:
-					ID2D1HwndRenderTarget *getTarget()
+					static ID2D1HwndRenderTarget *getTarget()
 					{return window->target;}
 
-					ID2D1Factory *getFactory()
+
+					static ID2D1Factory *getFactory()
 					{return window->factory;}
 
-					float getWindowWidth()
+					static float getWindowWidth()
 					{return window->getWidth();}
 
-					float getWindowHeight()
+					static float getWindowHeight()
 					{return window->getHeight();}
 
 				public:
-					virtual void draw()
+					virtual void draw(ID2D1RenderTarget *target = getTarget())
 					{}
 			};
 
@@ -278,7 +279,7 @@
 				public:
 					Color color;
 
-					virtual void fill()
+					virtual void fill(ID2D1RenderTarget *target = getTarget())
 					{}
 			};
 
@@ -302,8 +303,8 @@
 					~Text()
 					{}
 
-					void draw()
-					{getTarget()->DrawTextW(text.c_str(), text.size(), CoreFont(fontSize, fontFamily), {vertex.x, vertex.y, getWindowWidth(), getWindowHeight()}, CoreBrush(color));}
+					void draw(ID2D1RenderTarget *target = getTarget())
+					{target->DrawTextW(text.c_str(), text.size(), CoreFont(fontSize, fontFamily), {vertex.x, vertex.y, getWindowWidth(), getWindowHeight()}, CoreBrush(color));}
 			};
 
 			class Line : public Drawable
@@ -321,8 +322,8 @@
 						this->thickness = thickness;
 					}
 
-					void draw()
-					{getTarget()->DrawLine(start, end, CoreBrush(color), thickness);}
+					void draw(ID2D1RenderTarget *target = getTarget())
+					{target->DrawLine(start, end, CoreBrush(color), thickness);}
 			};
 
 			class Rectangle : public Shape
@@ -337,11 +338,11 @@
 						this->color = color;
 					}
 
-					void draw()
-					{getTarget()->DrawRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, CoreBrush(color));}
+					void draw(ID2D1RenderTarget *target = getTarget())
+					{target->DrawRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, CoreBrush(color));}
 
-					void fill()
-					{getTarget()->FillRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, CoreBrush(color));}
+					void fill(ID2D1RenderTarget *target = getTarget())
+					{target->FillRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, CoreBrush(color));}
 			};
 
 			class Ellipse : public Shape
@@ -356,11 +357,11 @@
 						this->color = color;
 					}
 
-					void draw()
-					{getTarget()->DrawEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, CoreBrush(color));}
+					void draw(ID2D1RenderTarget *target = getTarget())
+					{target->DrawEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, CoreBrush(color));}
 
-					void fill()
-					{getTarget()->FillEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, CoreBrush(color));}
+					void fill(ID2D1RenderTarget *target = getTarget())
+					{target->FillEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, CoreBrush(color));}
 			};
 
 			class Polygon : public Shape
@@ -374,7 +375,7 @@
 						this->color = color;
 					}
 
-					void draw()
+					void draw(ID2D1RenderTarget *target = getTarget())
 					{
 						ID2D1PathGeometry *geometry; getFactory()->CreatePathGeometry(&geometry);
 						ID2D1GeometrySink *sink; geometry->Open(&sink);
@@ -384,13 +385,13 @@
 						sink->EndFigure(D2D1_FIGURE_END_CLOSED);
 
 						sink->Close();
-						getTarget()->DrawGeometry(geometry, CoreBrush(color));
+						target->DrawGeometry(geometry, CoreBrush(color));
 
 						sink->Release();
 						geometry->Release();
 					}
 
-					void fill()
+					void fill(ID2D1RenderTarget *target = getTarget())
 					{
 						ID2D1PathGeometry *geometry; getFactory()->CreatePathGeometry(&geometry);
 						ID2D1GeometrySink *sink; geometry->Open(&sink);
@@ -400,7 +401,7 @@
 						sink->EndFigure(D2D1_FIGURE_END_CLOSED);
 
 						sink->Close();
-						getTarget()->FillGeometry(geometry, CoreBrush(color));
+						target->FillGeometry(geometry, CoreBrush(color));
 
 						sink->Release();
 						geometry->Release();
@@ -409,12 +410,9 @@
 
 			class Bitmap : public Drawable
 			{
-				IWICImagingFactory *factory = nullptr;
-				IWICBitmapDecoder *decoder = nullptr;
-				IWICBitmapFrameDecode *frame = nullptr;
-				IWICFormatConverter *converter = nullptr;
+				ID2D1Bitmap *bitmap = nullptr;
 
-				size_t width = 0, height = 0;
+				float width = 0, height = 0;
 				vector<Color> colors = vector<Color>();
 
 				public:
@@ -423,52 +421,79 @@
 					Bitmap(Vertex vertex = {})
 					{this->vertex = vertex;}
 
-					Bitmap(Vertex vertex, wstring filePath)
-					{this->vertex = vertex; this->loadFromFile(filePath);}
-
 					~Bitmap()
 					{
-						if(factory && decoder && frame && converter)
-						{
-							factory->Release(); factory = nullptr;
-							decoder->Release(); decoder = nullptr;
-							frame->Release(); frame = nullptr;
-							converter->Release(); converter = nullptr;
-						}
+						if(bitmap)
+						{bitmap->Release(); bitmap = nullptr;}
 					}
 					
 					void loadFromFile(wstring filePath)
 					{
-						CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (void**)&factory);
-						factory->CreateDecoderFromFilename(filePath.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder);
-						decoder->GetFrame(0, &frame);
-						factory->CreateFormatConverter(&converter); frame->GetSize((UINT*)&width, (UINT*)&height);
+						IWICImagingFactory *factory; CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (void**)&factory);
+						IWICBitmapDecoder *decoder; factory->CreateDecoderFromFilename(filePath.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder);
+						IWICBitmapFrameDecode *frame; decoder->GetFrame(0, &frame);
+					 	IWICFormatConverter *converter; factory->CreateFormatConverter(&converter); frame->GetSize((UINT*)&width, (UINT*)&height);
+						
 						converter->Initialize(frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
+						getTarget()->CreateBitmapFromWicBitmap(converter, &bitmap);
 
-						BYTE *bytes = new BYTE[width * height * 4];
+						BYTE *bytes = new BYTE[(int)width * (int)height * 4];
 						frame->CopyPixels(nullptr, width * 4, width * height * 4, bytes);
 
 						for(size_t i = 0; i < width * height * 4; i++)
 						{colors.push_back(Color::fromRGBA(*(bytes + i + 2), *(bytes + i + 1), *(bytes + i), *(bytes + i + 3)));}
 
 						delete []bytes;
+						converter->Release();
+						frame->Release();
+						decoder->Release();
+						factory->Release();
 					}
 
-					size_t getWidth()
+					float getWidth()
 					{return width;}
 
-					size_t getHeight()
+					float getHeight()
 					{return height;}
 
-					Color getColor(size_t x, size_t y)
-					{return colors[y * width + x];}
+					Color getColor(Vertex vertex)
+					{return colors[vertex.y * width + vertex.x];}
 
-					void draw()
+					void draw(ID2D1RenderTarget *target = getTarget())
+					{target->DrawBitmap(bitmap, {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
+			};
+
+			class Layer : public Drawable
+			{
+				ID2D1BitmapRenderTarget *target = nullptr;
+
+				public:
+					Layer()
+					{}
+
+					~Layer()
 					{
-						ID2D1Bitmap *bitmap; getTarget()->CreateBitmapFromWicBitmap(converter, nullptr, &bitmap);
+						if(target)
+						{target->EndDraw(); target->Release(); target = nullptr;}
+					}
 
-						getTarget()->DrawBitmap(bitmap, {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});
-						
+					operator ID2D1RenderTarget*()
+					{return target;}
+
+					void create()
+					{getTarget()->CreateCompatibleRenderTarget(&target); target->BeginDraw();}
+
+					void clear(Color color = L"")
+					{target->Clear(color);}
+
+					void render()
+					{
+						ID2D1Bitmap *bitmap; target->GetBitmap(&bitmap);
+
+						target->EndDraw();
+						getTarget()->DrawBitmap(bitmap, {0, 0, getWindowWidth(), getWindowHeight()}, 1, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, getWindowWidth(), getWindowHeight()});
+						target->BeginDraw();
+
 						bitmap->Release();
 					}
 			};
