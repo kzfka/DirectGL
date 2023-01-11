@@ -173,9 +173,18 @@
 						_1, _2, _3, _4, _5, _6, _7, _8, _9, numpad0 = 0x60, numpad1, numpad2, numpad3, numpad4, numpad5, numpad6, numpad7,
 						numpad8, numpad9, a = 0x41, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z
 					};
-					
+
 					Window()
 					{window = this;}
+					
+					Window(wstring title, size_t width, size_t height)
+					{
+						this->title = title;
+						this->width = width;
+						this->height = height;
+
+						window = this;
+					}
 
 					~Window()
 					{
@@ -183,32 +192,23 @@
 						target->Release();
 					}
 
+					bool isHeld(Key key)
+					{return this->key[key];}
+
 					wstring getTitle()
 					{return title;}
 
-					size_t getWidth()
+					float getWidth()
 					{return width;}
 
-					size_t getHeight()
+					float getHeight()
 					{return height;}
 
 					Vertex getMousePos()
 					{POINT mouse; GetCursorPos(&mouse); ScreenToClient(handle, &mouse); return {(float)mouse.x, (float)mouse.y};}
 
-					void setTitle(wstring title)
-					{this->title = title; SetWindowTextW(handle, title.c_str());}
-
-					void setWidth(size_t width)
-					{this->width = width; SetWindowPos(handle, handle, 0, 0, width, height, SWP_NOMOVE); target->Resize(D2D1::SizeU(width, height));}
-
-					void setHeight(size_t height)
-					{this->height = height; SetWindowPos(handle, handle, 0, 0, width, height, SWP_NOMOVE); target->Resize(D2D1::SizeU(width, height));}
-
 					void setMousePos(Vertex vertex)
 					{POINT mouse {(long int)vertex.x, (long int)vertex.y}; ScreenToClient(handle, &mouse); SetCursorPos(mouse.x, mouse.y);}
-
-					bool isHeld(Key key)
-					{return this->key[key];}
 
 					void destroy()
 					{DestroyWindow(handle); exit(0);}
@@ -426,7 +426,7 @@
 				
 				wstring filePath;
 
-				int width = 0, height = 0;
+				size_t width = 0, height = 0;
 				vector<Color> colors = vector<Color>();
 
 				public:
@@ -462,10 +462,10 @@
 						converter->Initialize(frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
 						getTarget()->CreateBitmapFromWicBitmap(converter, &bitmap);
 
-						BYTE *bytes = new BYTE[(int)width * (int)height * 4];
+						BYTE *bytes = new BYTE[width * height * 4];
 						frame->CopyPixels(nullptr, width * 4, width * height * 4, bytes);
 
-						for(int i = 0; i < width * height * 4; i++)
+						for(size_t i = 0; i < width * height * 4; i++)
 						{colors.push_back(Color::fromRGBA(*(bytes + i + 2), *(bytes + i + 1), *(bytes + i), *(bytes + i + 3)));}
 
 						delete []bytes;
