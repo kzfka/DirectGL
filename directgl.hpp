@@ -105,8 +105,12 @@
 			{
 				friend class Window;
 
+				static inline vector<Request*> requests;
+
 				protected:
-					void request();
+					void request()
+					{requests.push_back(this);}
+
 					virtual void onRequest()
 					{}
 			};
@@ -120,8 +124,6 @@
 
 				friend LRESULT CALLBACK ::WindowProc(HWND, UINT, WPARAM, LPARAM);
 				friend INT WINAPI ::WinMain(HINSTANCE, HINSTANCE, PSTR, INT);
-
-				static inline vector<Request*> requests;
 
 				wstring title = L"DirectGL";
 				size_t width = 640;
@@ -141,8 +143,8 @@
 					D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &factory);
 					factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(handle, D2D1::SizeU(rect.right, rect.bottom)), &target);
 
-					for(size_t i = 0; i < requests.size(); i++)
-					{requests[i]->onRequest(); requests.erase(requests.begin() + i);}
+					for(size_t i = 0; i < Request::requests.size(); i++)
+					{Request::requests[i]->onRequest(); Request::requests.erase(Request::requests.begin() + i);}
 
 					onCreate();
 				}
@@ -520,9 +522,6 @@
 						bitmap->Release();
 					}
 			};
-
-			void Request::request()
-			{Window::requests.push_back(this);}
 		}
 	}
 
