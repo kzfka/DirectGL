@@ -106,10 +106,16 @@
 				friend class Window;
 
 				static inline vector<Request*> requests;
+				static inline bool available = true;
 
 				protected:
-					void request()
-					{requests.push_back(this);}
+					bool request()
+					{
+						if(available)
+						{requests.push_back(this); return true;}
+
+						return false;
+					}
 
 					virtual void onRequest()
 					{}
@@ -146,7 +152,7 @@
 					for(size_t i = 0; i < Request::requests.size(); i++)
 					{Request::requests[i]->onRequest(); Request::requests.erase(Request::requests.begin() + i);}
 
-					onCreate();
+					Request::available = false; onCreate();
 				}
 
 				void update()
@@ -439,9 +445,6 @@
 				vector<Color> colors = vector<Color>();
 
 				public:
-					static Bitmap &fromFile(Vertex vertex, wstring filePath)
-					{Bitmap bitmap(vertex); bitmap.loadFromFile(filePath); return bitmap;}
-
 					Vertex vertex;
 
 					Bitmap(Vertex vertex = {})
@@ -452,7 +455,8 @@
 						this->vertex = vertex;
 						this->filePath = filePath;
 
-						request();
+						if(!request())
+						{loadFromFile(filePath);}
 					}
 
 					~Bitmap()
@@ -506,7 +510,10 @@
 
 				public:
 					Layer()
-					{request();}
+					{
+						if(!request())
+						{onRequest();}
+					}
 
 					~Layer()
 					{
