@@ -31,8 +31,8 @@ Represents a drawable element.
 Represents a drawable (and fillable) element.
 | Definition | Description |
 | ---------- | ----------- |
-| `std::GL::Color std::GL::Shape::color` |  |
-| `void std::GL::Shape::fill(ID2D1RenderTarget*)` |  |
+| `std::GL::Color std::GL::Shape::color` | Color of the shape. |
+| `void std::GL::Shape::fill(ID2D1RenderTarget*)` | Meant to be overrided; should fill the element on the given render target. |
 
 ### std::GL::Request
 Rrepresents a request.
