@@ -11,7 +11,7 @@ An application that uses DirectGL needs a few Windows specific libraries in orde
 In case if your code editor doesn't feature a linker, edit your compile line so it includes the following: `-ld2d1 -ldwrite -lwindowscodecs -lole32`.
 
 ## Extending the implementation
-You can create your custom classes that represent various other elements. To make them compatible with the interface of DirectGL you have to implement one of the following classes:
+You can create your custom classes that represent various other elements. To make them compatible with the interface of DirectGL you have to derive from one of the following classes:
   - `std::GL::Drawable`
   - `std::GL::Shape`
 
