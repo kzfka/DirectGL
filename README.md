@@ -21,14 +21,14 @@ Represents a drawable element.
 | static | ID2D1Factory*| getFactory() | Returns the Direct2D factory. |
 | static | float | getWindowWidth() | Returns window's width. |
 | static | float | getWindowHeight() | Returns window's height. |
-| virtual | void | draw(ID2D1RenderTarget*) | Meant to be overrided; should draw the element onto the given render target. |
+| virtual | void | draw(ID2D1RenderTarget*) | Meant to be overrided; should draw the element on the given render target. |
 
 ### std::GL::Shape
 Represents a drawable (and fillable) element. Contains all the definitions from `std::GL::Drawable` and the following additional:
 | Modifier | Type | Definition | Description |
 | -------- | ---- | ---------- | ----------- |
 | | std::GL::Color | color | Color of the shape. |
-| | void | fill(ID2D1RenderTarget*) | Meant to be overrided; should fill the element on the given render target. |
+| | void | fill(ID2D1RenderTarget*) | Meant to be overrided; should draw a filled element on the given render target. |
 
 ### std::GL::Request
 Rrepresents a request.
