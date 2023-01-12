@@ -19,14 +19,17 @@ And an optional one being `std::GL::Request`.
 
 ### std::GL::Drawable
 This class represents a drawable element. Does not implement any default members, only a set of methods:
-  - `static ID2D1HwndRenderTarget *std::GL::Drawable::getTarget()`
-  - `static ID2D1Factory *std::GL::Drawable::getFactory()`
-  - `static float std::GL::Drawable::getWindowWidth()`
-  - `static float std::GL::Drawable::getWindowHeight()`
-  - `virtual void std::GL::Drwable::draw(ID2D1RenderTarget*)`
+Definition | Description
+`static ID2D1HwndRenderTarget *std::GL::Drawable::getTarget()` | Returns the default render target of the window.
+`static ID2D1Factory *std::GL::Drawable::getFactory()` | Returns the Direct2D factory.
+`static float std::GL::Drawable::getWindowWidth()` | Returns window's width.
+`static float std::GL::Drawable::getWindowHeight()` | Returns window's height.
+`virtual void std::GL::Drwable::draw(ID2D1RenderTarget*)` | Meant to be overrided; should draw the element onto the given render target.
 
 ### std::GL::Shape
-This class represents a drawable (and fillable) element. Does not implement any default members as well, just the same methods as `std::GL::Drawable` and one additional: `virtual void std::GL::Shape::fill(ID2D1RenderTarget*)`.
+This class represents a drawable (and fillable) element. Implements the same contents as `std::GL::Drawable` and following additional:
+  - `std::GL::Color std::GL::Shape::color`
+  - `void std::GL::Shape::fill(ID2D1RenderTarget*)`
 
 ### std::GL::Request
 This class is a little bit tricky to explain. Implements the following methods:
