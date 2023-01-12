@@ -19,24 +19,24 @@ And an optional one being `std::GL::Request`.
 
 ### std::GL::Drawable
 Represents a drawable element.
-| Definition | Description |
-| ---------- | ----------- |
-| static ID2D1HwndRenderTarget *std::GL::Drawable::getTarget() | Returns the default render target of the window. |
-| static ID2D1Factory *std::GL::Drawable::getFactory() | Returns the Direct2D factory. |
-| static float std::GL::Drawable::getWindowWidth() | Returns window's width. |
-| static float std::GL::Drawable::getWindowHeight() | Returns window's height. |
-| virtual void std::GL::Drwable::draw(ID2D1RenderTarget*) | Meant to be overrided; should draw the element onto the given render target. |
+| Modifier | Type | Definition | Description |
+| -------- | ---- | ---------- | ----------- |
+| static | ID2D1HwndRenderTarget*| std::GL::Drawable::getTarget() | Returns the default render target of the window. |
+| static | ID2D1Factory*| std::GL::Drawable::getFactory() | Returns the Direct2D factory. |
+| static | float | std::GL::Drawable::getWindowWidth() | Returns window's width. |
+| static | float | std::GL::Drawable::getWindowHeight() | Returns window's height. |
+| virtual | void | std::GL::Drwable::draw(ID2D1RenderTarget*) | Meant to be overrided; should draw the element onto the given render target. |
 
 ### std::GL::Shape
 Represents a drawable (and fillable) element.
-| Definition | Description |
-| ---------- | ----------- |
-| std::GL::Color std::GL::Shape::color | Color of the shape. |
-| void std::GL::Shape::fill(ID2D1RenderTarget*) | Meant to be overrided; should fill the element on the given render target. |
+| Modifier | Type | Definition | Description |
+| -------- | ---- | ---------- | ----------- |
+| | std::GL::Color | std::GL::Shape::color | Color of the shape. |
+| | void | std::GL::Shape::fill(ID2D1RenderTarget*) | Meant to be overrided; should fill the element on the given render target. |
 
 ### std::GL::Request
 Rrepresents a request.
-| Definition | Description |
-| ---------- | ----------- |
-| bool std::GL::Request::request() | If possible, sends the request; returns `true` if request was actually sent, `false` otherwise. |
-| virtual void std::GL::Request::onRequest() | Meant to be overrided; can handle the response to the request. |
+| Modifier | Type | Definition | Description |
+| -------- | ---- | ---------- | ----------- |
+| | bool | std::GL::Request::request() | If possible, sends the request; returns `true` if request was actually sent, `false` otherwise. |
+| virtual | void | std::GL::Request::onRequest() | Meant to be overrided; can handle the response to the request. |
