@@ -24,7 +24,7 @@ Represents a drawable element.
 | virtual | void | draw(ID2D1RenderTarget*) | Meant to be overrided; should draw the element onto the given render target. |
 
 ### std::GL::Shape
-Represents a drawable (and fillable) element.
+Represents a drawable (and fillable) element. Contains all the definitions from `std::GL::Drawable` and the following additional:
 | Modifier | Type | Definition | Description |
 | -------- | ---- | ---------- | ----------- |
 | | std::GL::Color | color | Color of the shape. |
