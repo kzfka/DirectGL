@@ -14,5 +14,6 @@ In case if your code editor doesn't feature a linker, edit your compile line so 
 You can create your custom classes that represent various other elements. To make them compatible with the interface of DirectGL you have to use one of the following classes:
   - `std::GL::Drawable`,
   - `std::GL::Shape`
+
 And optional:
   - `std::GL::Request`
