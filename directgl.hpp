@@ -229,7 +229,7 @@
 					{}
 
 					virtual void onUpdate()
-					{clear();}
+					{}
 
 					virtual void onDestroy()
 					{}
