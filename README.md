@@ -18,7 +18,7 @@ You can create your custom classes that represent various other elements. To mak
 And an optional one being `std::GL::Request`.
 
 ### std::GL::Drawable
-This class represents a drawable element. Does not implement any default members, only a set of methods:
+This class represents a drawable element.
 | Definition | Description |
 | ---------- | ----------- |
 | `static ID2D1HwndRenderTarget *std::GL::Drawable::getTarget()` | Returns the default render target of the window. |
