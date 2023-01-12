@@ -18,7 +18,7 @@ You can create your custom classes that represent various other elements. To mak
 And an optional one being `std::GL::Request`.
 
 ### std::GL::Drawable
-This class represents a drawable element.
+Represents a drawable element.
 | Definition | Description |
 | ---------- | ----------- |
 | `static ID2D1HwndRenderTarget *std::GL::Drawable::getTarget()` | Returns the default render target of the window. |
@@ -28,14 +28,15 @@ This class represents a drawable element.
 | `virtual void std::GL::Drwable::draw(ID2D1RenderTarget*)` | Meant to be overrided; should draw the element onto the given render target. |
 
 ### std::GL::Shape
-This class represents a drawable (and fillable) element. Implements the same contents as `std::GL::Drawable` and following additional:
-  - `std::GL::Color std::GL::Shape::color`
-  - `void std::GL::Shape::fill(ID2D1RenderTarget*)`
+Represents a drawable (and fillable) element.
+| Definition | Description |
+| ---------- | ----------- |
+| `std::GL::Color std::GL::Shape::color` |  |
+| `void std::GL::Shape::fill(ID2D1RenderTarget*)` |  |
 
 ### std::GL::Request
-This class is a little bit tricky to explain. Implements the following methods:
-  - `bool std::GL::Request::request()`
-  - `virtual void std::GL::Request::onRequest()`
-
-The first one, sends the request if possible, returns `true` if request was sent, `false` otherwise.
-Second method is meant to be overrided and is executed whenever a sent request is processed. Each request is being processed before calling the `std::GL::Window::onCreate()` method.
+Rrepresents a request.
+| Definition | Description |
+| ---------- | ----------- |
+| `bool std::GL::Request::request()` | If possible, sends the request; returns `true` if request was actually sent, `false` otherwise. |
+| `virtual void std::GL::Request::onRequest()` | Meant to be overrided; can handle the response to the request. |
