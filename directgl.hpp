@@ -27,9 +27,6 @@
 	{
 		namespace GL
 		{
-			typedef unsigned char Key;
-			typedef unsigned int Direction;
-
 			class Vertex
 			{
 				public:
@@ -162,14 +159,14 @@
 					target->EndDraw();
 				}
 
-				void setHeld(Key key, bool held)
+				void setHeld(unsigned char key, bool held)
 				{
 					if(key >= 0 && key < 256)
 					{this->key[key] = held;}
 				}
 
 				public:
-					enum
+					enum Key
 					{
 						leftButton = 0x01, rightButton, middleButton = 0x04, xButton1, xButton2, backspace = 0x08, tabulator,
 						enter = 0x0d, shift = 0x10, control, alternative, capsLock = 0x14, escape = 0x1b, f1 = 0x70, f2, f3, f4,
@@ -180,7 +177,7 @@
 						numpad8, numpad9, a = 0x41, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z
 					};
 
-					enum
+					enum Direction
 					{
 						forwards = 7864320,
 						backwards = 4287102976
@@ -590,15 +587,15 @@
 			case WM_DESTROY: std::GL::window->onDestroy(); PostQuitMessage(0); return 0;
 			case WM_PAINT:  std::GL::window->update(); return 0;
 			
-			case WM_KEYDOWN: std::GL::window->setHeld(message_parameter0, true); std::GL::window->onKeystroke(message_parameter0); return 0;
-			case WM_LBUTTONDOWN: std::GL::window->key[VK_LBUTTON] = true; std::GL::window->onKeystroke(VK_LBUTTON); return 0;
-			case WM_MBUTTONDOWN: std::GL::window->key[VK_MBUTTON] = true; std::GL::window->onKeystroke(VK_MBUTTON); return 0;
-			case WM_RBUTTONDOWN: std::GL::window->key[VK_RBUTTON] = true; std::GL::window->onKeystroke(VK_RBUTTON); return 0;
+			case WM_KEYDOWN: std::GL::window->setHeld(message_parameter0, true); std::GL::window->onKeystroke((std::GL::Window::Key)message_parameter0); return 0;
+			case WM_LBUTTONDOWN: std::GL::window->key[VK_LBUTTON] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_LBUTTON); return 0;
+			case WM_MBUTTONDOWN: std::GL::window->key[VK_MBUTTON] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_MBUTTON); return 0;
+			case WM_RBUTTONDOWN: std::GL::window->key[VK_RBUTTON] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_RBUTTON); return 0;
 			case WM_XBUTTONDOWN:
 				switch(message_parameter0)
 				{
-					case XBUTTON1: std::GL::window->key[VK_XBUTTON1] = true; std::GL::window->onKeystroke(VK_XBUTTON1); return 0;
-					case XBUTTON2: std::GL::window->key[VK_XBUTTON2] = true; std::GL::window->onKeystroke(VK_XBUTTON2); return 0;
+					case XBUTTON1: std::GL::window->key[VK_XBUTTON1] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_XBUTTON1); return 0;
+					case XBUTTON2: std::GL::window->key[VK_XBUTTON2] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_XBUTTON2); return 0;
 				}
 
 			case WM_KEYUP: std::GL::window->setHeld(message_parameter0, false); return 0;
@@ -612,7 +609,7 @@
 					case XBUTTON2: std::GL::window->key[VK_XBUTTON2] = false; return 0;
 				}
 
-			case WM_MOUSEWHEEL: std::GL::window->onScroll(message_parameter0); return 0;
+			case WM_MOUSEWHEEL: std::GL::window->onScroll((std::GL::Window::Direction)message_parameter0); return 0;
 		}
 
 		return DefWindowProcW(window_handle, message, message_parameter0, message_parameter1);
