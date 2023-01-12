@@ -210,10 +210,10 @@
 					wstring getTitle()
 					{return title;}
 
-					float getWidth()
+					size_t getWidth()
 					{return width;}
 
-					float getHeight()
+					size_t getHeight()
 					{return height;}
 
 					Vertex getMousePos()
@@ -491,10 +491,10 @@
 						factory->Release();
 					}
 
-					float getWidth()
+					size_t getWidth()
 					{return width;}
 
-					float getHeight()
+					size_t getHeight()
 					{return height;}
 
 					Color getColor(Vertex vertex)
