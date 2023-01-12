@@ -12,7 +12,6 @@ In case if your code editor doesn't feature a linker, edit your compile line so 
 
 ## Extending the implementation
 You can create your custom classes that represent various elements. DirectGL provides a couple of abstract classes, so you can interact with the library.
-------
 
 ### std::GL::Drawable
 Represents a drawable element.
