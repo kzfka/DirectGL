@@ -145,17 +145,7 @@
 					for(size_t i = 0; i < Request::requests.size(); i++)
 					{Request::requests[i]->onRequest();} Request::requests.clear();
 
-					Request::available = false;
-					
-					target->BeginDraw();
-					onCreate();
-				}
-
-				void update()
-				{
-					onUpdate();
-					target->EndDraw();
-					target->BeginDraw();
+					Request::available = false; onCreate();
 				}
 
 				void setHeld(unsigned char key, bool held)
@@ -196,7 +186,6 @@
 
 					~Window()
 					{
-						target->EndDraw();
 						factory->Release();
 						target->Release();
 					}
@@ -219,11 +208,17 @@
 					void setMousePos(Vertex vertex)
 					{POINT mouse {(long int)vertex.x, (long int)vertex.y}; ScreenToClient(handle, &mouse); SetCursorPos(mouse.x, mouse.y);}
 
-					void destroy()
-					{DestroyWindow(handle); exit(0);}
+					void begin()
+					{target->BeginDraw();}
+
+					void end()
+					{target->EndDraw();}
 
 					void clear(Color color = L"")
 					{target->Clear(color);}
+
+					void destroy()
+					{DestroyWindow(handle); exit(0);}
 
 					virtual void onCreate()
 					{}
@@ -493,8 +488,8 @@
 					size_t getHeight()
 					{return height;}
 
-					Color getColor(size_t x, size_t y)
-					{return colors[y * width + x];}
+					Color getColor(Vertex vertex)
+					{return colors[vertex.y * width + vertex.x];}
 
 					void draw(ID2D1RenderTarget *target = getTarget())
 					{target->DrawBitmap(bitmap, {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
@@ -514,14 +509,20 @@
 					~Layer()
 					{
 						if(target)
-						{target->EndDraw(); target->Release(); target = nullptr;}
+						{target->Release(); target = nullptr;}
 					}
 
 					operator ID2D1RenderTarget*()
 					{return target;}
 
 					void onRequest()
-					{getTarget()->CreateCompatibleRenderTarget(&target); target->BeginDraw();}
+					{getTarget()->CreateCompatibleRenderTarget(&target);}
+
+					void begin()
+					{target->BeginDraw();}
+
+					void end()
+					{target->EndDraw();}
 
 					void clear(Color color = L"")
 					{target->Clear(color);}
@@ -530,9 +531,7 @@
 					{
 						ID2D1Bitmap *bitmap; target->GetBitmap(&bitmap);
 
-						target->EndDraw();
 						getTarget()->DrawBitmap(bitmap, {0, 0, getWindowWidth(), getWindowHeight()}, 1, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, getWindowWidth(), getWindowHeight()});
-						target->BeginDraw();
 
 						bitmap->Release();
 					}
@@ -584,7 +583,7 @@
 		switch(message)
 		{
 			case WM_DESTROY: std::GL::window->onDestroy(); PostQuitMessage(0); return 0;
-			case WM_PAINT:  std::GL::window->update(); return 0;
+			case WM_PAINT:  std::GL::window->onUpdate(); return 0;
 			
 			case WM_KEYDOWN: std::GL::window->setHeld(message_parameter0, true); std::GL::window->onKeystroke((std::GL::Window::Key)message_parameter0); return 0;
 			case WM_LBUTTONDOWN: std::GL::window->key[VK_LBUTTON] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_LBUTTON); return 0;
