@@ -431,7 +431,6 @@
 			class Bitmap : public Drawable, public Request
 			{
 				ID2D1Bitmap *bitmap = nullptr;
-				
 				wstring filePath;
 
 				size_t width = 0, height = 0;
@@ -474,7 +473,7 @@
 						BYTE *bytes = new BYTE[width * height * 4];
 						frame->CopyPixels(nullptr, width * 4, width * height * 4, bytes);
 
-						for(size_t i = 0; i < width * height * 4; i++)
+						for(size_t i = 0; i < width * height * 4; i += 4)
 						{colors.push_back(Color::fromRGBA(*(bytes + i + 2), *(bytes + i + 1), *(bytes + i), *(bytes + i + 3)));}
 
 						delete []bytes;
@@ -490,8 +489,8 @@
 					size_t getHeight()
 					{return height;}
 
-					Color getColor(Vertex vertex)
-					{return colors[vertex.y * width + vertex.x];}
+					Color getColor(size_t x, size_t y)
+					{return colors[y * width + x];}
 
 					void draw(ID2D1RenderTarget *target = getTarget())
 					{target->DrawBitmap(bitmap, {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
