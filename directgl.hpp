@@ -9,7 +9,6 @@
 	#include <string>
 	#include <math.h>
 	#include <vector>
-	#include <stdlib.h>
 
 	#include <wincodec.h>
 	#include <windows.h>
@@ -64,9 +63,6 @@
 
 					static Color fromRGBA(unsigned char r = 0, unsigned char g = 0, unsigned char b = 0, unsigned char a = 255)
 					{return {(float)r / 255, (float)g / 255, (float)b / 255, (float)a / 255};}
-
-					static Color random()
-					{return {(float)(rand() % 256) / 255, (float)(rand() % 256) / 255, (float)(rand() % 256) / 255};}
 
 					Color(float r = 0, float g = 0, float b = 0, float a = 1)
 					{this->r = r; this->g = g; this->b = b; this->a = a;}
