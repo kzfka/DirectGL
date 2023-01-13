@@ -145,14 +145,17 @@
 					for(size_t i = 0; i < Request::requests.size(); i++)
 					{Request::requests[i]->onRequest();} Request::requests.clear();
 
-					Request::available = false; onCreate();
+					Request::available = false;
+					
+					target->BeginDraw();
+					onCreate();
 				}
 
 				void update()
 				{
-					target->BeginDraw();
 					onUpdate();
 					target->EndDraw();
+					target->BeginDraw();
 				}
 
 				void setHeld(unsigned char key, bool held)
@@ -193,6 +196,7 @@
 
 					~Window()
 					{
+						target->EndDraw();
 						factory->Release();
 						target->Release();
 					}
