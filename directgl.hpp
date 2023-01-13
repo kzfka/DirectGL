@@ -145,7 +145,17 @@
 					for(size_t i = 0; i < Request::requests.size(); i++)
 					{Request::requests[i]->onRequest();} Request::requests.clear();
 
-					Request::available = false; onCreate();
+					Request::available = false;
+					
+					target->BeginDraw();
+					onCreate();
+				}
+
+				void update()
+				{
+					onUpdate();
+					target->EndDraw();
+					target->BeginDraw();
 				}
 
 				void setHeld(unsigned char key, bool held)
@@ -186,6 +196,7 @@
 
 					~Window()
 					{
+						target->EndDraw();
 						factory->Release();
 						target->Release();
 					}
@@ -207,12 +218,6 @@
 
 					void setMousePos(Vertex vertex)
 					{POINT mouse {(long int)vertex.x, (long int)vertex.y}; ScreenToClient(handle, &mouse); SetCursorPos(mouse.x, mouse.y);}
-
-					void begin()
-					{target->BeginDraw();}
-
-					void end()
-					{target->EndDraw();}
 
 					void clear(Color color = L"")
 					{target->Clear(color);}
@@ -509,31 +514,26 @@
 					~Layer()
 					{
 						if(target)
-						{target->Release(); target = nullptr;}
+						{target->EndDraw(); target->Release(); target = nullptr;}
 					}
 
 					operator ID2D1RenderTarget*()
 					{return target;}
 
 					void onRequest()
-					{getTarget()->CreateCompatibleRenderTarget(&target);}
-
-					void begin()
-					{target->BeginDraw();}
-
-					void end()
-					{target->EndDraw();}
-
-					void clear(Color color = L"")
-					{target->Clear(color);}
+					{getTarget()->CreateCompatibleRenderTarget(&target); target->BeginDraw();}
 
 					void draw()
 					{
-						ID2D1Bitmap *bitmap; target->GetBitmap(&bitmap);
+						ID2D1Bitmap *bitmap;
+
+						target->EndDraw();
+						target->GetBitmap(&bitmap);
 
 						getTarget()->DrawBitmap(bitmap, {0, 0, getWindowWidth(), getWindowHeight()}, 1, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, getWindowWidth(), getWindowHeight()});
 
 						bitmap->Release();
+						target->BeginDraw();
 					}
 			};
 		}
@@ -583,7 +583,7 @@
 		switch(message)
 		{
 			case WM_DESTROY: std::GL::window->onDestroy(); PostQuitMessage(0); return 0;
-			case WM_PAINT:  std::GL::window->onUpdate(); return 0;
+			case WM_PAINT:  std::GL::window->update(); return 0;
 			
 			case WM_KEYDOWN: std::GL::window->setHeld(message_parameter0, true); std::GL::window->onKeystroke((std::GL::Window::Key)message_parameter0); return 0;
 			case WM_LBUTTONDOWN: std::GL::window->key[VK_LBUTTON] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_LBUTTON); return 0;
