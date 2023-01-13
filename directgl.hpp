@@ -523,6 +523,9 @@
 					void onRequest()
 					{getTarget()->CreateCompatibleRenderTarget(&target); target->BeginDraw();}
 
+					void clear(Color color = L"")
+					{target->Clear(color);}
+
 					void draw()
 					{
 						ID2D1Bitmap *bitmap;
