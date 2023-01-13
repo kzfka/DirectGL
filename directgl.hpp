@@ -143,7 +143,7 @@
 					factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(handle, D2D1::SizeU(rect.right, rect.bottom)), &target);
 
 					for(size_t i = 0; i < Request::requests.size(); i++)
-					{Request::requests[i]->onRequest(); Request::requests.erase(Request::requests.begin() + i);}
+					{Request::requests[i]->onRequest();} Request::requests.clear();
 
 					Request::available = false; onCreate();
 				}
