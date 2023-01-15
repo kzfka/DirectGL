@@ -6,6 +6,7 @@
 		#define UNICODE_WAS_UNDEFINED
 	#endif
 
+	#include <map>
 	#include <string>
 	#include <math.h>
 	#include <vector>
@@ -114,6 +115,17 @@
 					{}
 			};
 
+			class CorePreLoadedBitmaps
+			{
+				friend class Window;
+				friend class Bitmap;
+
+				static inline map<wstring, ID2D1Bitmap*> bitmaps = map<wstring, ID2D1Bitmap*>();
+
+				public:
+					CorePreLoadedBitmaps() = delete;
+			};
+
 			class Window *window;
 			class Window
 			{
@@ -199,6 +211,9 @@
 						target->EndDraw();
 						factory->Release();
 						target->Release();
+
+						for(map<wstring, ID2D1Bitmap*>::iterator pair = CorePreLoadedBitmaps::bitmaps.begin(); pair != CorePreLoadedBitmaps::bitmaps.end(); ++pair)
+						{pair->second->Release();}
 					}
 
 					bool isHeld(Key key)
@@ -434,45 +449,22 @@
 
 			class Bitmap : public Drawable, public Request
 			{
-				ID2D1Bitmap *bitmap = nullptr;
 				wstring filePath;
-
 				size_t width = 0, height = 0;
 				vector<Color> colors = vector<Color>();
-
-				public:
-					Vertex vertex;
-
-					Bitmap(Vertex vertex = {})
-					{this->vertex = vertex;}
-
-					Bitmap(Vertex vertex, wstring filePath)
-					{
-						this->vertex = vertex;
-						this->filePath = filePath;
-
-						if(!request())
-						{loadFromFile(filePath);}
-					}
-
-					~Bitmap()
-					{
-						if(bitmap)
-						{bitmap->Release(); bitmap = nullptr;}
-					}
-					
-					void onRequest()
-					{loadFromFile(filePath);}
-
-					void loadFromFile(wstring filePath)
+	
+				void preLoad(wstring filePath)
+				{
+					if(CorePreLoadedBitmaps::bitmaps.find(filePath) == CorePreLoadedBitmaps::bitmaps.end())
 					{
 						IWICImagingFactory *factory; CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (void**)&factory);
 						IWICBitmapDecoder *decoder; factory->CreateDecoderFromFilename(filePath.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder);
 						IWICBitmapFrameDecode *frame; decoder->GetFrame(0, &frame); frame->GetSize((UINT*)&width, (UINT*)&height);
-					 	IWICFormatConverter *converter; factory->CreateFormatConverter(&converter);
+						IWICFormatConverter *converter; factory->CreateFormatConverter(&converter);
+						ID2D1Bitmap *bitmap;
 						
 						converter->Initialize(frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
-						getTarget()->CreateBitmapFromWicBitmap(converter, &bitmap);
+						getTarget()->CreateBitmapFromWicBitmap(converter, &bitmap); CorePreLoadedBitmaps::bitmaps[filePath] = bitmap;
 
 						BYTE *bytes = new BYTE[width * height * 4];
 						frame->CopyPixels(nullptr, width * 4, width * height * 4, bytes);
@@ -486,6 +478,25 @@
 						decoder->Release();
 						factory->Release();
 					}
+				}
+
+				public:
+					Vertex vertex;
+
+					Bitmap(Vertex vertex = {})
+					{this->vertex = vertex;}
+
+					Bitmap(Vertex vertex, wstring filePath)
+					{
+						this->vertex = vertex;
+						this->filePath = filePath;
+
+						if(!request())
+						{preLoad(filePath);}
+					}
+					
+					void onRequest()
+					{preLoad(filePath);}
 
 					size_t getWidth()
 					{return width;}
@@ -497,7 +508,7 @@
 					{return colors[vertex.y * width + vertex.x];}
 
 					void draw(ID2D1RenderTarget *target = getTarget())
-					{target->DrawBitmap(bitmap, {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
+					{target->DrawBitmap(CorePreLoadedBitmaps::bitmaps[filePath], {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
 			};
 
 			class Layer : public Drawable, public Request
