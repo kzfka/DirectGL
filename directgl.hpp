@@ -118,7 +118,6 @@
 			class Window *window;
 			class Window
 			{
-				friend class Bitmap;
 				friend class Request;
 				friend class Drawable;
 				friend class Brush;
@@ -126,19 +125,19 @@
 				friend LRESULT CALLBACK ::WindowProc(HWND, UINT, WPARAM, LPARAM);
 				friend INT WINAPI ::WinMain(HINSTANCE, HINSTANCE, PSTR, INT);
 
-				class ResourceManager
+				class Resources
 				{
 					friend class Bitmap;
 
 					static inline map<wstring, ID2D1Bitmap*> bitmaps = map<wstring, ID2D1Bitmap*>();
 
 					public:
-						~ResourceManager()
+						~Resources()
 						{
 							for(map<wstring, ID2D1Bitmap*>::iterator pair = bitmaps.begin(); pair != bitmaps.end(); ++pair)
 							{pair->second->Release();}
 						}
-				} resourceManager;
+				} resources;
 
 				wstring title = L"DirectGL";
 				size_t width = 640;
@@ -303,6 +302,9 @@
 					static ID2D1Factory *getFactory()
 					{return window->factory;}
 
+					static Window::Resources *getResources()
+					{return &window->resources;}
+
 					static float getWindowWidth()
 					{return window->getWidth();}
 
@@ -456,7 +458,7 @@
 	
 				void preLoad(wstring filePath)
 				{
-					if(window->resourceManager.bitmaps.find(filePath) == window->resourceManager.bitmaps.end())
+					if(getResources()->bitmaps.find(filePath) == getResources()->bitmaps.end())
 					{
 						IWICImagingFactory *factory; CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (void**)&factory);
 						IWICBitmapDecoder *decoder; factory->CreateDecoderFromFilename(filePath.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder);
@@ -465,7 +467,7 @@
 						ID2D1Bitmap *bitmap;
 						
 						converter->Initialize(frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
-						getTarget()->CreateBitmapFromWicBitmap(converter, &bitmap); window->resourceManager.bitmaps[filePath] = bitmap;
+						getTarget()->CreateBitmapFromWicBitmap(converter, &bitmap); getResources()->bitmaps[filePath] = bitmap;
 
 						BYTE *bytes = new BYTE[width * height * 4];
 						frame->CopyPixels(nullptr, width * 4, width * height * 4, bytes);
@@ -509,7 +511,7 @@
 					{return colors[vertex.y * width + vertex.x];}
 
 					void draw(ID2D1RenderTarget *target = getTarget())
-					{target->DrawBitmap(window->resourceManager.bitmaps[filePath], {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
+					{target->DrawBitmap(getResources()->bitmaps[filePath], {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
 			};
 
 			class Layer : public Drawable, public Request
