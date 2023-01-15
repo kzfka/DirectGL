@@ -115,26 +115,30 @@
 					{}
 			};
 
-			class CorePreLoadedBitmaps
-			{
-				friend class Window;
-				friend class Bitmap;
-
-				static inline map<wstring, ID2D1Bitmap*> bitmaps = map<wstring, ID2D1Bitmap*>();
-
-				public:
-					CorePreLoadedBitmaps() = delete;
-			};
-
 			class Window *window;
 			class Window
 			{
+				friend class Bitmap;
 				friend class Request;
 				friend class Drawable;
-				friend class CoreBrush;
+				friend class Brush;
 
 				friend LRESULT CALLBACK ::WindowProc(HWND, UINT, WPARAM, LPARAM);
 				friend INT WINAPI ::WinMain(HINSTANCE, HINSTANCE, PSTR, INT);
+
+				class ResourceManager
+				{
+					friend class Bitmap;
+
+					static inline map<wstring, ID2D1Bitmap*> bitmaps = map<wstring, ID2D1Bitmap*>();
+
+					public:
+						~ResourceManager()
+						{
+							for(map<wstring, ID2D1Bitmap*>::iterator pair = bitmaps.begin(); pair != bitmaps.end(); ++pair)
+							{pair->second->Release();}
+						}
+				} resourceManager;
 
 				wstring title = L"DirectGL";
 				size_t width = 640;
@@ -211,9 +215,6 @@
 						target->EndDraw();
 						factory->Release();
 						target->Release();
-
-						for(map<wstring, ID2D1Bitmap*>::iterator pair = CorePreLoadedBitmaps::bitmaps.begin(); pair != CorePreLoadedBitmaps::bitmaps.end(); ++pair)
-						{pair->second->Release();}
 					}
 
 					bool isHeld(Key key)
@@ -256,46 +257,46 @@
 					{}
 			};
 
-			class CoreBrush
-			{
-				ID2D1SolidColorBrush *brush;
-
-				public:
-					CoreBrush(Color color = L"")
-					{window->target->CreateSolidColorBrush(color, &brush);}
-
-					~CoreBrush()
-					{brush->Release();}
-
-					operator ID2D1SolidColorBrush*()
-					{return brush;}
-			};
-
-			class CoreFont
-			{
-				IDWriteFactory *factory;
-				IDWriteTextFormat *format;
-
-				public:
-					CoreFont(float fontSize, wstring fontFamily)
-					{
-						DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(factory), (IUnknown**)&factory);
-						factory->CreateTextFormat(fontFamily.c_str(), nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, fontSize, L"", &format);
-					}
-
-					~CoreFont()
-					{
-						format->Release();
-						factory->Release();
-					}
-
-					operator IDWriteTextFormat*()
-					{return format;}
-			};
-
 			class Drawable
 			{
 				protected:
+					class Brush
+					{
+						ID2D1SolidColorBrush *brush;
+
+						public:
+							Brush(Color color = L"")
+							{window->target->CreateSolidColorBrush(color, &brush);}
+
+							~Brush()
+							{brush->Release();}
+
+							operator ID2D1SolidColorBrush*()
+							{return brush;}
+					};
+
+					class Font
+					{
+						IDWriteFactory *factory;
+						IDWriteTextFormat *format;
+
+						public:
+							Font(float fontSize, wstring fontFamily)
+							{
+								DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(factory), (IUnknown**)&factory);
+								factory->CreateTextFormat(fontFamily.c_str(), nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, fontSize, L"", &format);
+							}
+
+							~Font()
+							{
+								format->Release();
+								factory->Release();
+							}
+
+							operator IDWriteTextFormat*()
+							{return format;}
+					};
+
 					static ID2D1HwndRenderTarget *getTarget()
 					{return window->target;}
 
@@ -343,7 +344,7 @@
 					{}
 
 					void draw(ID2D1RenderTarget *target = getTarget())
-					{target->DrawTextW(text.c_str(), text.size(), CoreFont(fontSize, fontFamily), {vertex.x, vertex.y, getWindowWidth(), getWindowHeight()}, CoreBrush(color));}
+					{target->DrawTextW(text.c_str(), text.size(), Font(fontSize, fontFamily), {vertex.x, vertex.y, getWindowWidth(), getWindowHeight()}, Brush(color));}
 			};
 
 			class Line : public Drawable
@@ -362,7 +363,7 @@
 					}
 
 					void draw(ID2D1RenderTarget *target = getTarget())
-					{target->DrawLine(start, end, CoreBrush(color), thickness);}
+					{target->DrawLine(start, end, Brush(color), thickness);}
 			};
 
 			class Rectangle : public Shape
@@ -378,10 +379,10 @@
 					}
 
 					void draw(ID2D1RenderTarget *target = getTarget())
-					{target->DrawRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, CoreBrush(color));}
+					{target->DrawRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, Brush(color));}
 
 					void fill(ID2D1RenderTarget *target = getTarget())
-					{target->FillRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, CoreBrush(color));}
+					{target->FillRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, Brush(color));}
 			};
 
 			class Ellipse : public Shape
@@ -397,10 +398,10 @@
 					}
 
 					void draw(ID2D1RenderTarget *target = getTarget())
-					{target->DrawEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, CoreBrush(color));}
+					{target->DrawEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, Brush(color));}
 
 					void fill(ID2D1RenderTarget *target = getTarget())
-					{target->FillEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, CoreBrush(color));}
+					{target->FillEllipse({vertex.x - size.x / 2, vertex.y - size.y / 2, size.x, size.y}, Brush(color));}
 			};
 
 			class Polygon : public Shape
@@ -424,7 +425,7 @@
 						sink->EndFigure(D2D1_FIGURE_END_CLOSED);
 
 						sink->Close();
-						target->DrawGeometry(geometry, CoreBrush(color));
+						target->DrawGeometry(geometry, Brush(color));
 
 						sink->Release();
 						geometry->Release();
@@ -440,7 +441,7 @@
 						sink->EndFigure(D2D1_FIGURE_END_CLOSED);
 
 						sink->Close();
-						target->FillGeometry(geometry, CoreBrush(color));
+						target->FillGeometry(geometry, Brush(color));
 
 						sink->Release();
 						geometry->Release();
@@ -455,7 +456,7 @@
 	
 				void preLoad(wstring filePath)
 				{
-					if(CorePreLoadedBitmaps::bitmaps.find(filePath) == CorePreLoadedBitmaps::bitmaps.end())
+					if(window->resourceManager.bitmaps.find(filePath) == window->resourceManager.bitmaps.end())
 					{
 						IWICImagingFactory *factory; CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (void**)&factory);
 						IWICBitmapDecoder *decoder; factory->CreateDecoderFromFilename(filePath.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &decoder);
@@ -464,7 +465,7 @@
 						ID2D1Bitmap *bitmap;
 						
 						converter->Initialize(frame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeMedianCut);
-						getTarget()->CreateBitmapFromWicBitmap(converter, &bitmap); CorePreLoadedBitmaps::bitmaps[filePath] = bitmap;
+						getTarget()->CreateBitmapFromWicBitmap(converter, &bitmap); window->resourceManager.bitmaps[filePath] = bitmap;
 
 						BYTE *bytes = new BYTE[width * height * 4];
 						frame->CopyPixels(nullptr, width * 4, width * height * 4, bytes);
@@ -508,7 +509,7 @@
 					{return colors[vertex.y * width + vertex.x];}
 
 					void draw(ID2D1RenderTarget *target = getTarget())
-					{target->DrawBitmap(CorePreLoadedBitmaps::bitmaps[filePath], {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
+					{target->DrawBitmap(window->resourceManager.bitmaps[filePath], {vertex.x, vertex.y, vertex.x + width, vertex.y + height}, 1, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});}
 			};
 
 			class Layer : public Drawable, public Request
