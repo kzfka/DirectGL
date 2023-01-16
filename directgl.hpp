@@ -197,6 +197,9 @@
 
 					Window()
 					{window = this;}
+
+					Window(HWND handle)
+					{this->handle = handle; window = this; create();}
 					
 					Window(wstring title, size_t width, size_t height)
 					{
