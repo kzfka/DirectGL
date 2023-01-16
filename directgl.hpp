@@ -127,11 +127,9 @@
 
 				class Resources
 				{
-					friend class Bitmap;
-
-					static inline map<wstring, ID2D1Bitmap*> bitmaps = map<wstring, ID2D1Bitmap*>();
-
 					public:
+						static inline map<wstring, ID2D1Bitmap*> bitmaps = map<wstring, ID2D1Bitmap*>();
+
 						~Resources()
 						{
 							for(map<wstring, ID2D1Bitmap*>::iterator pair = bitmaps.begin(); pair != bitmaps.end(); ++pair)
