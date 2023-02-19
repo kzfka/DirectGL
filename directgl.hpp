@@ -143,7 +143,8 @@
 
 				HWND handle;
 				ID2D1Factory *factory;
-				ID2D1HwndRenderTarget *target;
+				ID2D1BitmapRenderTarget *target;
+				ID2D1HwndRenderTarget *windowTarget;
 
 				bool key[256];
 
@@ -153,12 +154,12 @@
 					
 					CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
 					D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &factory);
-					factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(handle, D2D1::SizeU(rect.right, rect.bottom)), &target);
+
+					factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(handle, D2D1::SizeU(rect.right, rect.bottom)), &windowTarget);
+					windowTarget->CreateCompatibleRenderTarget(&target);
 
 					for(size_t i = 0; i < Request::requests.size(); i++)
-					{Request::requests[i]->onRequest();} Request::requests.clear();
-
-					Request::available = false;
+					{Request::requests[i]->onRequest();} Request::requests.clear(); Request::available = false;
 					
 					target->BeginDraw();
 					onCreate();
@@ -166,8 +167,17 @@
 
 				void update()
 				{
+					ID2D1Bitmap *bitmap;
+
 					onUpdate();
+
 					target->EndDraw();
+					windowTarget->BeginDraw();
+
+					target->GetBitmap(&bitmap);
+					windowTarget->DrawBitmap(bitmap, {0, 0, (float)width, (float)height}, 1, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, {0, 0, (float)width, (float)height});
+
+					windowTarget->EndDraw();
 					target->BeginDraw();
 				}
 
@@ -197,9 +207,6 @@
 
 					Window()
 					{window = this;}
-
-					Window(HWND handle)
-					{this->handle = handle; window = this; create();}
 					
 					Window(wstring title, size_t width, size_t height)
 					{
@@ -297,7 +304,7 @@
 							{return format;}
 					};
 
-					static ID2D1HwndRenderTarget *getTarget()
+					static ID2D1BitmapRenderTarget *getTarget()
 					{return window->target;}
 
 					static ID2D1Factory *getFactory()
