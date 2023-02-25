@@ -379,20 +379,20 @@
 			class Rectangle : public Shape
 			{
 				public:
-					Vertex start, size;
+					Vertex vertex, size;
 
 					Rectangle(Vertex start = {}, Vertex size = {}, Color color = L"")
 					{
-						this->start = start;
+						this->vertex = start;
 						this->size = size;
 						this->color = color;
 					}
 
 					void draw(ID2D1RenderTarget *target = getTarget())
-					{target->DrawRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, Brush(color));}
+					{target->DrawRectangle({vertex.x, vertex.y, vertex.x + size.x, vertex.y + size.y}, Brush(color));}
 
 					void fill(ID2D1RenderTarget *target = getTarget())
-					{target->FillRectangle({start.x, start.y, start.x + size.x, start.y + size.y}, Brush(color));}
+					{target->FillRectangle({vertex.x, vertex.y, vertex.x + size.x, vertex.y + size.y}, Brush(color));}
 			};
 
 			class Ellipse : public Shape
