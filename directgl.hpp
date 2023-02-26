@@ -140,7 +140,7 @@
 				size_t width, height;
 				wstring title;
 
-				HWND handle = nullptr;
+				HWND handle;
 				ID2D1Factory *factory;
 				ID2D1BitmapRenderTarget *target;
 				ID2D1HwndRenderTarget *windowTarget;
