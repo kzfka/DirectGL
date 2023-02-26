@@ -1,5 +1,5 @@
-#ifndef DIRECTGL_INCLUDED
-	#define DIRECTGL_INCLUDED
+#ifndef DIRECTDGL_INCLUDED
+	#define DIRECTDGL_INCLUDED
 
 	#ifndef UNICODE
 		#define UNICODE
@@ -25,7 +25,7 @@
 
 	namespace std
 	{
-		namespace GL
+		namespace DGL
 		{
 			class Vertex
 			{
@@ -137,11 +137,10 @@
 						}
 				} resources;
 
-				wstring title = L"DirectGL";
-				size_t width = 640;
-				size_t height = 480;
+				size_t width, height;
+				wstring title;
 
-				HWND handle;
+				HWND handle = nullptr;
 				ID2D1Factory *factory;
 				ID2D1BitmapRenderTarget *target;
 				ID2D1HwndRenderTarget *windowTarget;
@@ -204,16 +203,13 @@
 						forwards = 7864320,
 						backwards = 4287102976
 					};
-
-					Window()
-					{window = this;}
 					
-					Window(wstring title, size_t width, size_t height)
+					Window(size_t width = 640, size_t height = 480, wstring title = L"")
 					{
-						this->title = title;
 						this->width = width;
 						this->height = height;
-
+						this->title = title;
+						
 						window = this;
 					}
 
@@ -381,9 +377,9 @@
 				public:
 					Vertex vertex, size;
 
-					Rectangle(Vertex start = {}, Vertex size = {}, Color color = L"")
+					Rectangle(Vertex vertex = {}, Vertex size = {}, Color color = L"")
 					{
-						this->vertex = start;
+						this->vertex = vertex;
 						this->size = size;
 						this->color = color;
 					}
@@ -564,38 +560,38 @@
 		}
 	}
 
-	INT WINAPI WinMain(HINSTANCE instance_handle, HINSTANCE previous_instance_handle, PSTR cmd_line, INT show_cmd)
+	INT WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance, PSTR cmdLine, INT showCMD)
 	{
 		MSG message = {};
 		WNDCLASS window_class = {};
 
 		window_class.lpfnWndProc = WindowProc;
-		window_class.hInstance = instance_handle;
-		window_class.lpszClassName = L"DIRECTGL_WINDOW";
+		window_class.hInstance = instance;
+		window_class.lpszClassName = L"DIRECTDGL_WINDOW";
 
 		RegisterClassW(&window_class);
 
-		std::GL::window->handle = CreateWindowExW
+		std::DGL::window->handle = CreateWindowExW
 		(
 			0,
 			window_class.lpszClassName,
-			std::GL::window->title.c_str(),
+			std::DGL::window->title.c_str(),
 			WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 			CW_USEDEFAULT,
 			CW_USEDEFAULT,
-			std::GL::window->width + 5,
-			std::GL::window->height + 29,
+			std::DGL::window->width + 5,
+			std::DGL::window->height + 29,
 			nullptr,
 			nullptr,
-			instance_handle,
+			instance,
 			nullptr
 		);
 		
-		std::GL::window->create();
+		std::DGL::window->create();
 
-		ShowWindow(std::GL::window->handle, show_cmd);
+		ShowWindow(std::DGL::window->handle, showCMD);
 		ShowWindow(GetConsoleWindow(), SW_HIDE);
-		UpdateWindow(std::GL::window->handle);
+		UpdateWindow(std::DGL::window->handle);
 
 		while(GetMessageW(&message, nullptr, 0, 0) > 0)
 		{TranslateMessage(&message); DispatchMessageW(&message);}
@@ -607,32 +603,32 @@
 	{
 		switch(message)
 		{
-			case WM_DESTROY: std::GL::window->onDestroy(); PostQuitMessage(0); return 0;
-			case WM_PAINT:  std::GL::window->update(); return 0;
+			case WM_DESTROY: std::DGL::window->onDestroy(); PostQuitMessage(0); return 0;
+			case WM_PAINT:  std::DGL::window->update(); return 0;
 			
-			case WM_KEYDOWN: std::GL::window->setHeld(message_parameter0, true); std::GL::window->onKeystroke((std::GL::Window::Key)message_parameter0); return 0;
-			case WM_LBUTTONDOWN: std::GL::window->key[VK_LBUTTON] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_LBUTTON); return 0;
-			case WM_MBUTTONDOWN: std::GL::window->key[VK_MBUTTON] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_MBUTTON); return 0;
-			case WM_RBUTTONDOWN: std::GL::window->key[VK_RBUTTON] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_RBUTTON); return 0;
+			case WM_KEYDOWN: std::DGL::window->setHeld(message_parameter0, true); std::DGL::window->onKeystroke((std::DGL::Window::Key)message_parameter0); return 0;
+			case WM_LBUTTONDOWN: std::DGL::window->key[VK_LBUTTON] = true; std::DGL::window->onKeystroke((std::DGL::Window::Key)VK_LBUTTON); return 0;
+			case WM_MBUTTONDOWN: std::DGL::window->key[VK_MBUTTON] = true; std::DGL::window->onKeystroke((std::DGL::Window::Key)VK_MBUTTON); return 0;
+			case WM_RBUTTONDOWN: std::DGL::window->key[VK_RBUTTON] = true; std::DGL::window->onKeystroke((std::DGL::Window::Key)VK_RBUTTON); return 0;
 			case WM_XBUTTONDOWN:
 				switch(message_parameter0)
 				{
-					case XBUTTON1: std::GL::window->key[VK_XBUTTON1] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_XBUTTON1); return 0;
-					case XBUTTON2: std::GL::window->key[VK_XBUTTON2] = true; std::GL::window->onKeystroke((std::GL::Window::Key)VK_XBUTTON2); return 0;
+					case XBUTTON1: std::DGL::window->key[VK_XBUTTON1] = true; std::DGL::window->onKeystroke((std::DGL::Window::Key)VK_XBUTTON1); return 0;
+					case XBUTTON2: std::DGL::window->key[VK_XBUTTON2] = true; std::DGL::window->onKeystroke((std::DGL::Window::Key)VK_XBUTTON2); return 0;
 				}
 
-			case WM_KEYUP: std::GL::window->setHeld(message_parameter0, false); return 0;
-			case WM_LBUTTONUP: std::GL::window->key[VK_LBUTTON] = false; return 0;
-			case WM_MBUTTONUP: std::GL::window->key[VK_MBUTTON] = false; return 0;
-			case WM_RBUTTONUP: std::GL::window->key[VK_RBUTTON] = false; return 0;
+			case WM_KEYUP: std::DGL::window->setHeld(message_parameter0, false); return 0;
+			case WM_LBUTTONUP: std::DGL::window->key[VK_LBUTTON] = false; return 0;
+			case WM_MBUTTONUP: std::DGL::window->key[VK_MBUTTON] = false; return 0;
+			case WM_RBUTTONUP: std::DGL::window->key[VK_RBUTTON] = false; return 0;
 			case WM_XBUTTONUP:
 				switch(message_parameter0)
 				{
-					case XBUTTON1: std::GL::window->key[VK_XBUTTON1] = false; return 0;
-					case XBUTTON2: std::GL::window->key[VK_XBUTTON2] = false; return 0;
+					case XBUTTON1: std::DGL::window->key[VK_XBUTTON1] = false; return 0;
+					case XBUTTON2: std::DGL::window->key[VK_XBUTTON2] = false; return 0;
 				}
 
-			case WM_MOUSEWHEEL: std::GL::window->onScroll((std::GL::Window::Direction)message_parameter0); return 0;
+			case WM_MOUSEWHEEL: std::DGL::window->onScroll((std::DGL::Window::Direction)message_parameter0); return 0;
 		}
 
 		return DefWindowProcW(window_handle, message, message_parameter0, message_parameter1);
